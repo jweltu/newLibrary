@@ -9,7 +9,55 @@ O **NewLibrary** é um sistema para o gerenciamento e manutenção de uma biblio
 - Controle de Status de Leitura;
 - Relatórios Sobre o Acervo pessoal.
 
-## 2. Componente Curricular
+
+## 2. UML Textual
+
+### 2.1. Publicação:
+
+- Atributos:
+  - Nome;
+  - Ano de Publicação;
+  - ISBN;
+  - Autor;
+  - Quantidade de páginas;
+  - Gênero;
+  - Tipo (Livro ou Revista);
+  - Data de Inclusão;
+  - Avaliação do Usuário;
+  - Status de Leitura.
+ 
+- Métodos:
+  - Publicar();
+  - PesquisarPublicacao();
+  - AtualizarPublicacao();
+  - DeletarPublicacao();
+ 
+### 2.2. Livro:
+
+- Atributos:
+- Métodos:
+
+### 2.3. Revista:
+
+- Atributos:
+- Métodos:
+ 
+### 2.4. Leitura:
+
+- Atributos:
+- Métodos:
+
+### 2.5. Anotação:
+
+- Atributos:
+- Métodos:
+
+### 2.6. Coleção:
+
+- Atributos:
+- Métodos:
+
+## 3. Componente Curricular
 
 O **NewLibrary** é um projeto desenvolvido como componente para aplicar os conceitos e diretrizes da Programação Orientada a Objetos, como encapsulamento, herança (simples e múltipla), métodos especiais e regras de negócio configuráveis, utilizando o python como linguagem principal.
 
