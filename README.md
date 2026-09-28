@@ -15,32 +15,52 @@ O **NewLibrary** é um sistema para o gerenciamento e manutenção de uma biblio
 ### 2.1. Publicação:
 
 - Atributos:
-  - Nome;
-  - Ano de Publicação;
-  - ISBN;
-  - Autor;
-  - Quantidade de páginas;
-  - Gênero;
-  - Tipo (Livro ou Revista);
-  - Data de Inclusão;
-  - Avaliação do Usuário;
-  - Status de Leitura.
+  - id;
+  - tipoPublicacao;
+  - titulo;
+  - ano;
+  - autor;
+  - paginas;
+  - gênero;
+  - dataInclusao;
+  - dataInicioLeitura;
+  - dataTerminoLeitura;
+  - notaUsuario;
+  - anotacoes - List[Anotacao];
+  - leituras List[RegistroLeitura].
+
  
 - Métodos:
-  - Publicar();
-  - PesquisarPublicacao();
-  - AtualizarPublicacao();
-  - DeletarPublicacao();
- 
-### 2.2. Livro:
+  - tipo();
+  - iniciarLeitura(data=None);
+  - atualizarProgresso(pagina);
+  - concluirLeitura(data=None);
+  - avaliar(nota, resenha=None);
+  - percentualLido();
+  - diasLeitura();
+  - listarAnotacoes();
+  - adicionarAnotacao(texto, trecho=None, Pagina=None);
+  - listarAnotacoes();
 
-- Atributos:
-- Métodos:
+- Subclasses:
+  - Livro(Publicacao);
+    - isbn;
+    - editora;
+    - edicao.
+    
+  - revista(Publicacao);
+    - numeroEdicao;
+    - issn;
+    - periodicidade (mensal, semanal, …);
+    - editora.
+    
+- Herança Múltipla:
+  - SerializavelMixin;
+    - to_dict();
+    - from_dict().
+  - MidiaDigitalMixin.
+    - abrirArquivo();
 
-### 2.3. Revista:
-
-- Atributos:
-- Métodos:
  
 ### 2.4. Leitura:
 
