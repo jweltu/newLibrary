@@ -276,7 +276,58 @@ EstrategiaRelatorio ◁── Relatorio* (5 implementações)
 GeradorRelatorios ◇── EstrategiaRelatorio             Strategy
 ```
 
-## 3. Componente Curricular
+## 3. Estrutura de Arquivos:
+
+```
+biblioteca-pessoal/
+├── README.md
+├── settings.json
+├── data/
+├── bib/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── interface.py
+│   ├── service.py
+│   ├── config.py
+│   ├── excecoes.py
+│   ├── dados.py
+│   ├── modelos/
+│   │   ├── __init__.py
+│   │   ├── enums.py
+│   │   ├── mixins.py
+│   │   ├── publicacao.py
+│   │   ├── livro.py
+│   │   ├── revista.py
+│   │   ├── anotacao.py
+│   │   ├── registro_leitura.py
+│   │   └── colecao.py
+│   ├── estados/
+│   │   ├── __init__.py
+│   │   └── estado_leitura.py
+│   ├── repositorio/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── json_repo.py
+│   │   └── sqlite_repo.py
+│   └── relatorios/
+│       ├── __init__.py
+│       ├── base.py
+│       ├── estrategias.py
+│       └── gerador.py
+└── tests/
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_publicacao.py
+    ├── test_anotacao.py
+    ├── test_estados.py
+    ├── test_colecao.py
+    ├── test_regras_negocio.py
+    ├── test_persistencia.py
+    ├── test_relatorios.py
+    └── test_cli.py
+```
+
+## 4. Componente Curricular
 
 O **NewLibrary** é um projeto desenvolvido como componente para aplicar os conceitos e diretrizes da Programação Orientada a Objetos, como encapsulamento, herança (simples e múltipla), métodos especiais e regras de negócio configuráveis, utilizando o python como linguagem principal.
 
