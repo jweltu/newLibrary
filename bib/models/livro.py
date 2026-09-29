@@ -5,3 +5,5 @@ class Livro(Publicacao):
         super().__init__(titulo, autor, ano, nota, status, id, genero, paginas, pagina_atual, data_inclusao, data_inicio, data_termino, resenha, anotacoes, estado)
         self.editora = editora
         self.isbn = isbn
+    
+    def tipo(self): return "Livro"

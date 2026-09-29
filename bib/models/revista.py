@@ -5,3 +5,5 @@ class Revista(Publicacao):
         super().__init__(titulo, autor, ano, nota, status, id, genero, paginas, pagina_atual, data_inclusao, data_inicio, data_termino, resenha, anotacoes, estado)
         self.edicao = edicao
         self.issn = issn
+
+    def tipo(self): return "Revista"
