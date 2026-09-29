@@ -99,7 +99,7 @@ Livro(Publicacao)
 Revista(Publicacao)
 ------------------------------------------------------------
 + edicao: str | None
-+ periodicidade: str | None
++ issn: str | None
 ------------------------------------------------------------
 + tipo(): str                           (retorna "revista")
 

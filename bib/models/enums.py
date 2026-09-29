@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class StatusLeitura(Enum):
     """Estados possíveis de leitura de uma publicação."""
     NAO_LIDO = "NÃO LIDO"
