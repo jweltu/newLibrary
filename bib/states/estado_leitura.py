@@ -52,7 +52,7 @@ class EstadoLido(EstadoLeitura):
         pass
 
     def concluir(pub, data=None):
-        return TransicaoStatusError()
+        raise TransicaoStatusError()
 
     def pode_avaliar():
         return True
