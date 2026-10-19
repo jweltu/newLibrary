@@ -1,5 +1,3 @@
-from typing import Any
-
 from bib.models.colecao import Colecao
 from bib.relatorio.base import EstrategiaRelatorio
 
@@ -13,5 +11,5 @@ class GeradorRelatorios:
             raise TypeError("A estratégia deve implementar EstrategiaRelatorio")
         self._estrategia = estrategia
 
-    def executar(self, colecao: Colecao) -> dict[str, Any]:
+    def executar(self, colecao: Colecao) -> dict[str, object]:
         return self._estrategia.gerar(colecao)

@@ -1,19 +1,17 @@
-from typing import Any
-
 from bib.models.colecao import Colecao
 from bib.models.enums import StatusLeitura
 from bib.relatorio.base import EstrategiaRelatorio
 
 
 class RelatorioTotal(EstrategiaRelatorio):
-    def gerar(self, colecao: Colecao) -> dict[str, Any]:
+    def gerar(self, colecao: Colecao) -> dict[str, object]:
         return {"total": len(colecao.publicacoes)}
 
 
 class RelatorioPorStatus(EstrategiaRelatorio):
-    def gerar(self, colecao: Colecao) -> dict[str, Any]:
+    def gerar(self, colecao: Colecao) -> dict[str, object]:
         total = len(colecao.publicacoes)
-        relatorio: dict[str, Any] = {"total": total}
+        relatorio: dict[str, object] = {"total": total}
         chaves = {
             StatusLeitura.LIDO: "lidos",
             StatusLeitura.NAO_LIDO: "nao_lidos",
@@ -35,7 +33,7 @@ class RelatorioPorStatus(EstrategiaRelatorio):
 
 
 class RelatorioMediaAvaliacoes(EstrategiaRelatorio):
-    def gerar(self, colecao: Colecao) -> dict[str, Any]:
+    def gerar(self, colecao: Colecao) -> dict[str, object]:
         avaliadas = [
             publicacao.nota
             for publicacao in colecao.publicacoes.values()
@@ -49,13 +47,13 @@ class RelatorioMediaAvaliacoes(EstrategiaRelatorio):
 class RelatorioProgressoAnual(EstrategiaRelatorio):
     def __init__(self, meta: int, ano: int) -> None:
         if isinstance(meta, bool) or not isinstance(meta, int) or meta < 0:
-            raise ValueError("A meta anual deve ser um inteiro não negativo")
+            raise ValueError("A meta anual deve ser um valor inteiro não negativo")
         if isinstance(ano, bool) or not isinstance(ano, int):
-            raise ValueError("O ano deve ser um inteiro")
+            raise ValueError("O ano deve ser um valor inteiro")
         self._meta = meta
         self._ano = ano
 
-    def gerar(self, colecao: Colecao) -> dict[str, Any]:
+    def gerar(self, colecao: Colecao) -> dict[str, object]:
         concluidas = sum(
             publicacao.status is StatusLeitura.LIDO
             and publicacao.data_termino is not None

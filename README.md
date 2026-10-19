@@ -143,6 +143,15 @@ Colecao
 + __len__(): int
 + __iter__(): Iterator[Publicacao]
 
+`Colecao` recebe um dicionário de publicações indexado por ID (ou pode ser
+criada vazia) e a iteração percorre os objetos `Publicacao`. `adicionar`
+rejeita IDs duplicados e publicações com o mesmo título e autor;
+`obter`/`remover` lançam `PublicacaoNaoEncontradaError` quando o ID não existe.
+`buscar` combina filtros de texto parciais, sem diferenciar maiúsculas, e um
+status opcional. `filtrar` e `filtrar_por_periodo` incluem os limites do período
+de data de inclusão; `concluidas_no_ano(ano)` conta publicações lidas cuja data
+de término pertence ao ano informado.
+
 Configuracoes
 ------------------------------------------------------------
 + genero_favorito: str | None
