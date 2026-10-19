@@ -154,6 +154,11 @@ Configuracoes
 
 ```
 
+O arquivo `Configuracoes` valida os valores ao inicializar e sempre que um atributo é
+alterado: `limite_leituras_simultaneas` deve ser inteiro positivo, `meta_anual`
+deve ser inteiro não negativo (zero desativa a meta) e `genero_favorito` deve
+ser um texto não vazio ou `None`.
+
 ### 2.4. Padrão State
 
 ```
