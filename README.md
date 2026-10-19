@@ -221,6 +221,16 @@ RepositorioSQLite(RepositorioPublicacoes)      «opcional»
 + carregar_publicacoes(caminho: str): Colecao
 ```
 
+O repositório grava uma lista JSON de publicações, incluindo suas anotações e o
+tipo concreto (`livro` ou `revista`). Exemplo de uso:
+
+```python
+from bib.dados import carregar_publicacoes, salvar_publicacoes
+
+salvar_publicacoes(colecao, "data/publicacoes.json")
+colecao = carregar_publicacoes("data/publicacoes.json")
+```
+
 ### 2.6. Padrão Strategy
 
 ```
@@ -243,15 +253,12 @@ RelatorioMediaAvaliacoes(EstrategiaRelatorio)
 ------------------------------------------------------------
 + gerar(colecao): dict                  (média das notas das publicações LIDAS)
 
-RelatorioMediaAvaliacoes(EstrategiaRelatorio)
-------------------------------------------------------------
-+ gerar(colecao): dict                  (média das notas das publicações LIDAS)
-
 RelatorioProgressoAnual(EstrategiaRelatorio)
 ------------------------------------------------------------
 - _meta: int
 - _ano: int
 ------------------------------------------------------------
++ __init__(meta: int, ano: int)
 + gerar(colecao): dict                  (concluídas no ano, meta, % atingido, aviso)
 
 GeradorRelatorios
@@ -261,6 +268,24 @@ GeradorRelatorios
 + definir_estrategia(e: EstrategiaRelatorio): None
 + executar(colecao: Colecao): dict
 ```
+
+As estratégias retornam dicionários prontos para a interface apresentar. O
+relatório de status inclui quantidade e percentual por estado; a média considera
+somente publicações lidas e avaliadas. Sem avaliações ou sem meta anual, o
+percentual correspondente é `None`. O gerador pode trocar de estratégia sem
+alterar a coleção:
+
+```python
+from bib.relatorio import GeradorRelatorios, RelatorioPorStatus
+
+gerador = GeradorRelatorios(RelatorioPorStatus())
+resultado = gerador.executar(colecao)
+print(resultado["lidos"]["quantidade"])
+```
+
+As estratégias disponíveis são `RelatorioTotal`, `RelatorioPorStatus`,
+`RelatorioMediaAvaliacoes` e `RelatorioProgressoAnual(meta, ano)`.
+
 ### 2.7. Relacionamentos:
 
 ```
@@ -272,7 +297,7 @@ Publicacao  ──► 1 EstadoLeitura                       State
 Colecao     ◇── 0..* Publicacao                       agregação
 EstadoLeitura ◁── EstadoNaoLido, EstadoLendo, EstadoLido
 RepositorioPublicacoes ◁── RepositorioJSON, RepositorioSQLite
-EstrategiaRelatorio ◁── Relatorio* (5 implementações)
+EstrategiaRelatorio ◁── Relatorio* (4 implementações)
 GeradorRelatorios ◇── EstrategiaRelatorio             Strategy
 ```
 
@@ -350,5 +375,3 @@ O **NewLibrary** é um projeto desenvolvido como componente para aplicar os conc
 Além disso, também utiliza-se linguagens complementares, como **JSON** e **SQLite** para armazenamento e persistência de dados, além da implementação de testes por meio do **Pytest**.
 
 O **NewLibrary** foi desenvolvido como componente da disciplina de Programação Orientada a Objetos, ministrada pelo professor Jayr Pereira, da graduação de Engenharia de Software na Universidade Federal do Cariri (UFCA).
-
-

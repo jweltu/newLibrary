@@ -14,13 +14,13 @@ class Publicacao(SerializavelMixin, ABC):
         self.nota = nota
         self._status = self._normalizar_status(status)
         self._id = id
-        self._genero = genero
+        self.genero = genero
         self.paginas = paginas
         self.pagina_atual = pagina_atual
-        self._data_inclusao = data_inclusao
-        self._data_inicio = data_inicio
-        self._data_termino = data_termino
-        self._resenha = resenha
+        self.data_inclusao = data_inclusao
+        self.data_inicio = data_inicio
+        self.data_termino = data_termino
+        self.resenha = resenha
         self._anotacoes = list(anotacoes or [])
         self._estado = estado
 
@@ -91,14 +91,6 @@ class Publicacao(SerializavelMixin, ABC):
         return self._id
 
     @property
-    def genero(self):
-        return self._genero
-
-    @genero.setter
-    def genero(self, valor):
-        self._genero = valor
-
-    @property
     def paginas(self):
         return self._paginas
 
@@ -121,38 +113,6 @@ class Publicacao(SerializavelMixin, ABC):
         if hasattr(self, "_paginas") and valor > self._paginas:
             raise ValidacaoError("A página atual não pode superar o total de páginas")
         self._pagina_atual = valor
-
-    @property
-    def data_inclusao(self):
-        return self._data_inclusao
-
-    @data_inclusao.setter
-    def data_inclusao(self, valor):
-        self._data_inclusao = valor
-
-    @property
-    def data_inicio(self):
-        return self._data_inicio
-
-    @data_inicio.setter
-    def data_inicio(self, valor):
-        self._data_inicio = valor
-
-    @property
-    def data_termino(self):
-        return self._data_termino
-
-    @data_termino.setter
-    def data_termino(self, valor):
-        self._data_termino = valor
-
-    @property
-    def resenha(self):
-        return self._resenha
-
-    @resenha.setter
-    def resenha(self, valor):
-        self._resenha = valor
 
     @property
     def anotacoes(self):
@@ -180,7 +140,8 @@ class Publicacao(SerializavelMixin, ABC):
     @abstractmethod
     def tipo(self):
         raise NotImplementedError
-    
+
+    """Alterar Status de leitura da publicação pelo usuário."""
     def iniciar_leitura(self, data=None):
         if self.status is not StatusLeitura.NAO_LIDO:
             raise TransicaoStatusError("A leitura só pode ser iniciada para uma publicação não lida")
@@ -188,11 +149,13 @@ class Publicacao(SerializavelMixin, ABC):
         self.data_termino = None
         self._status = StatusLeitura.LENDO
 
+    """Atualização da última página lida pelo usuário."""
     def atualizar_progresso(self, pagina):
         if self.status is not StatusLeitura.LENDO:
             raise TransicaoStatusError("O progresso só pode ser atualizado durante a leitura")
         self.pagina_atual = pagina
-    
+
+    """Finalização da leitura da publicação pelo usuário."""
     def concluir_leitura(self, data=None):
         if self.status is not StatusLeitura.LENDO or self.data_inicio is None:
             raise TransicaoStatusError("Não é possível concluir uma leitura que não foi iniciada")
@@ -202,16 +165,19 @@ class Publicacao(SerializavelMixin, ABC):
         self.data_termino = data_termino
         self.pagina_atual = self.paginas
         self._status = StatusLeitura.LIDO
-    
+
+    """Avaliação da publicação pelo usuário"""
     def avaliar(self, nota, resenha=None):
         if self.status is not StatusLeitura.LIDO:
             raise TransicaoStatusError("A publicação só pode ser avaliada após a leitura")
         self.nota = nota
         self.resenha = resenha
-    
+
+    """cálculo do percentual de leitura da publicação"""
     def percentual_lido(self):
         return self.pagina_atual / self.paginas * 100
 
+    """Cálculo de dias de leitura da publicação"""
     def dias_de_leitura(self):
         if self.data_inicio is None or self.data_termino is None:
             return None

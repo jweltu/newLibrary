@@ -1,6 +1,9 @@
-def salvar_publicacoes():
-    pass
+from bib.repository.json_repo import RepositorioJSON
 
-def carregar_publicacoes():
-    pass
 
+def salvar_publicacoes(colecao, caminho):
+    RepositorioJSON(caminho).salvar(colecao)
+
+
+def carregar_publicacoes(caminho):
+    return RepositorioJSON(caminho).carregar()
