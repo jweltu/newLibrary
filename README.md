@@ -315,7 +315,7 @@ EstrategiaRelatorio ◁── Relatorio* (4 implementações)
 GeradorRelatorios ◇── EstrategiaRelatorio             Strategy
 ```
 
-## 3. Estrutura de Arquivos:
+## Estrutura de Arquivos:
 
 ```
 biblioteca-pessoal/
@@ -366,9 +366,61 @@ biblioteca-pessoal/
     └── test_cli.py
 ```
 
-## 4. Testes automatizados
+## Interface de linha de comando
 
-Instale as dependências de desenvolvimento e execute os testes com pytest:
+Instale o projeto para disponibilizar o comando `bib`:
+
+```bash
+python -m pip install .
+```
+
+O acervo é salvo por padrão em `~/.bib/publicacoes.json`. Use `--formato sqlite`
+para persistir em SQLite (padrão `~/.bib/publicacoes.db`) e `--arquivo caminho`
+para escolher explicitamente o caminho do arquivo.
+
+```bash
+bib cadastrar livro --titulo "Dom Casmurro" --autor "Machado de Assis" \
+  --ano 1899 --paginas 256 --genero romance --editora Garnier
+bib cadastrar revista --titulo "Revista de História" --autor "Equipe Editorial" \
+  --ano 2024 --paginas 80 --edicao 42
+bib listar
+bib listar --status lendo
+bib anotar ID_DA_PUBLICACAO --texto "Revisar este trecho" \
+  --trecho "Trecho destacado" --pagina 12 --categoria destaque
+bib relatorio
+bib relatorio --tipo anual --meta 12 --ano 2026
+bib listar --formato sqlite
+```
+
+Também é possível executar sem instalar o comando com `python -m bib` no lugar
+de `bib`.
+
+## API HTTP com FastAPI
+
+A instalação do projeto inclui FastAPI e Uvicorn. Inicie o servidor com:
+
+```bash
+python -m pip install .
+uvicorn bib.api:app --reload
+```
+
+A documentação interativa está em `http://127.0.0.1:8000/docs`. A API usa JSON
+por padrão. Defina `BIB_FORMATO=sqlite` para usar SQLite ou `BIB_ARQUIVO` para
+escolher o caminho do arquivo. A CLI e a API podem compartilhar o mesmo arquivo
+e formato de persistência.
+
+- `POST /publicacoes`: cadastra um livro ou uma revista.
+- `GET /publicacoes`: lista com filtros opcionais `titulo`, `autor`, `genero`
+  e `status`.
+- `GET /publicacoes/{id}`: consulta uma publicação.
+- `POST /publicacoes/{id}/anotacoes`: adiciona uma anotação ou destaque.
+- `GET /relatorios/{tipo}`: retorna `completo`, `total`, `status`, `media` ou
+  `anual` (com os parâmetros opcionais `meta` e `ano`).
+
+## Testes automatizados
+
+Instale o projeto e as dependências de desenvolvimento — isso também instala
+FastAPI e Uvicorn, necessários para coletar e testar a API — e execute o pytest:
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -382,7 +434,7 @@ python -m pytest tests/test_criacao_objetos.py
 python -m pytest tests/test_validacao.py
 ```
 
-## 5. Componente Curricular
+## Componente Curricular
 
 O **NewLibrary** é um projeto desenvolvido como componente para aplicar os conceitos e diretrizes da Programação Orientada a Objetos, como encapsulamento, herança (simples e múltipla), métodos especiais e regras de negócio configuráveis, utilizando o python como linguagem principal.
 

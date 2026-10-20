@@ -1,9 +1,9 @@
-from bib.repository.json_repo import RepositorioJSON
+from bib.repository import criar_repositorio
 
 
-def salvar_publicacoes(colecao, caminho):
-    RepositorioJSON(caminho).salvar(colecao)
+def salvar_publicacoes(colecao, caminho, formato="json"):
+    criar_repositorio(formato, caminho).salvar(colecao)
 
 
-def carregar_publicacoes(caminho):
-    return RepositorioJSON(caminho).carregar()
+def carregar_publicacoes(caminho, formato="json"):
+    return criar_repositorio(formato, caminho).carregar()

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from bib.models.colecao import Colecao
 from bib.models.livro import Livro
@@ -8,7 +9,7 @@ from bib.repository.base import RepositorioPublicacoes
 
 class RepositorioJSON(RepositorioPublicacoes):
     def __init__(self, caminho):
-        self._caminho = caminho
+        self._caminho = Path(caminho)
 
     def salvar(self, colecao):
         dados = []
@@ -21,6 +22,9 @@ class RepositorioJSON(RepositorioPublicacoes):
             json.dump(dados, arquivo, ensure_ascii=False, indent=2)
 
     def carregar(self):
+        if not self._caminho.exists():
+            return Colecao()
+
         with open(self._caminho, "r", encoding="utf-8") as arquivo:
             dados = json.load(arquivo)
 
