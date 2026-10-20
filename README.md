@@ -368,6 +368,16 @@ biblioteca-pessoal/
 
 ## Interface de linha de comando
 
+Para abrir a interface interativa com menus, execute o arquivo principal:
+
+```bash
+python main.py
+```
+
+No início, escolha entre JSON e SQLite. Em seguida, use o menu para cadastrar
+livros e revistas, listar publicações, adicionar anotações ou consultar
+relatórios. Também é possível sair a qualquer momento com `Ctrl+C`. (Será melhorado posteriormente)
+
 Instale o projeto para disponibilizar o comando `bib`:
 
 ```bash
