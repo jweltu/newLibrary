@@ -3,6 +3,7 @@ from bib.relatorio.estrategias import (
     RelatorioMediaAvaliacoes,
     RelatorioPorStatus,
     RelatorioProgressoAnual,
+    RelatorioTopAvaliadas,
     RelatorioTotal,
 )
 from bib.relatorio.gerador import GeradorRelatorios
@@ -13,5 +14,6 @@ __all__ = [
     "RelatorioMediaAvaliacoes",
     "RelatorioPorStatus",
     "RelatorioProgressoAnual",
+    "RelatorioTopAvaliadas",
     "RelatorioTotal",
 ]

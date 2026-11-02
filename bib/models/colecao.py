@@ -108,6 +108,22 @@ class Colecao:
     def filtrar_por_periodo(self, inicio, fim):
         return self.filtrar(inicio, fim)
 
+    def filtrar_por_periodo_leitura(self, inicio, fim):
+        if not isinstance(inicio, date) or not isinstance(fim, date):
+            raise ValidacaoError("O período deve usar datas válidas")
+        if inicio > fim:
+            raise ValidacaoError("A data inicial não pode ser posterior à data final")
+        return [
+            publicacao
+            for publicacao in self._publicacoes.values()
+            if publicacao.data_inicio is not None
+            and publicacao.data_inicio <= fim
+            and (
+                publicacao.data_termino is None
+                or publicacao.data_termino >= inicio
+            )
+        ]
+
     def em_leitura(self):
         return self.buscar(status=StatusLeitura.LENDO)
 

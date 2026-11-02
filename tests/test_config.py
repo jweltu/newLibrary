@@ -52,3 +52,27 @@ def test_configuracoes_aceita_limites_validos():
 
     assert config.limite_leituras_simultaneas == 1
     assert config.meta_anual == 12
+
+
+def test_configuracoes_carrega_e_salva_json(tmp_path):
+    caminho = tmp_path / "settings.json"
+    config = Configuracoes(
+        genero_favorito=" Ficção ",
+        limite_leituras_simultaneas=2,
+        meta_anual=10,
+    )
+
+    config.salvar(caminho)
+    carregada = Configuracoes.carregar(caminho)
+
+    assert carregada.genero_favorito == "Ficção"
+    assert carregada.limite_leituras_simultaneas == 2
+    assert carregada.meta_anual == 10
+
+
+def test_configuracoes_sem_arquivo_usa_valores_padrao(tmp_path):
+    config = Configuracoes.carregar(tmp_path / "ausente.json")
+
+    assert config.limite_leituras_simultaneas == 3
+    assert config.genero_favorito is None
+    assert config.meta_anual == 0

@@ -93,6 +93,28 @@ def test_filtrar_rejeita_periodo_invalido(livro_factory):
         colecao.filtrar(date(2026, 1, 3), date(2026, 1, 2))
 
 
+def test_filtrar_periodo_leitura_considera_intervalos_que_se_sobrepoem(livro_factory):
+    concluido = livro_factory(
+        id="concluido",
+        data_inicio=date(2026, 1, 1),
+        data_termino=date(2026, 1, 5),
+    )
+    lendo = livro_factory(
+        id="lendo",
+        data_inicio=date(2026, 1, 8),
+        data_termino=None,
+        status=StatusLeitura.LENDO,
+    )
+    sem_leitura = livro_factory(id="sem-leitura")
+    colecao = Colecao(
+        {item.id: item for item in (concluido, lendo, sem_leitura)}
+    )
+
+    assert colecao.filtrar_por_periodo_leitura(
+        date(2026, 1, 4), date(2026, 1, 10)
+    ) == [concluido, lendo]
+
+
 def test_concluidas_no_ano_e_contar_por_status(livro_factory, revista_factory):
     concluida = livro_factory(
         status=StatusLeitura.LIDO, data_termino=date(2026, 5, 1)

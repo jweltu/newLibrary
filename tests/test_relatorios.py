@@ -9,6 +9,7 @@ from bib.relatorio import (
     RelatorioMediaAvaliacoes,
     RelatorioPorStatus,
     RelatorioProgressoAnual,
+    RelatorioTopAvaliadas,
     RelatorioTotal,
 )
 
@@ -43,6 +44,12 @@ def test_relatorio_por_status_retorna_quantidade_e_percentual(
         "lidos": {"quantidade": 1, "percentual": 33.33},
         "nao_lidos": {"quantidade": 1, "percentual": 33.33},
         "lendo": {"quantidade": 1, "percentual": 33.33},
+        "livros": {
+            "total": 2,
+            "lidos": {"quantidade": 1, "percentual": 50.0},
+            "nao_lidos": {"quantidade": 1, "percentual": 50.0},
+            "lendo": {"quantidade": 0, "percentual": 0.0},
+        },
     }
 
 
@@ -52,6 +59,12 @@ def test_relatorio_por_status_sem_publicacoes_retorna_percentuais_zerados():
         "lidos": {"quantidade": 0, "percentual": 0.0},
         "nao_lidos": {"quantidade": 0, "percentual": 0.0},
         "lendo": {"quantidade": 0, "percentual": 0.0},
+        "livros": {
+            "total": 0,
+            "lidos": {"quantidade": 0, "percentual": 0.0},
+            "nao_lidos": {"quantidade": 0, "percentual": 0.0},
+            "lendo": {"quantidade": 0, "percentual": 0.0},
+        },
     }
 
 
@@ -80,6 +93,46 @@ def test_relatorio_media_sem_avaliacoes_retorna_media_nula():
         "media": None,
         "quantidade_avaliada": 0,
     }
+
+
+def test_relatorio_top5_informa_insuficiencia_com_menos_de_cinco_avaliacoes(
+    livro_factory,
+):
+    lido = livro_factory(status=StatusLeitura.LIDO, nota=9)
+
+    assert RelatorioTopAvaliadas().gerar(Colecao({lido.id: lido})) == {
+        "suficiente": False,
+        "mensagem": (
+            "Não há informações suficientes no acervo para gerar "
+            "o ranking das 5 publicações mais bem avaliadas."
+        ),
+        "publicacoes": [],
+    }
+
+
+def test_relatorio_top5_ordena_as_cinco_maiores_notas(livro_factory):
+    livros = [
+        livro_factory(
+            id=str(nota),
+            titulo=f"Livro {nota}",
+            autor=f"Autor {nota}",
+            status=StatusLeitura.LIDO,
+            nota=nota,
+        )
+        for nota in range(1, 7)
+    ]
+    colecao = Colecao({livro.id: livro for livro in livros})
+
+    resultado = RelatorioTopAvaliadas().gerar(colecao)
+
+    assert resultado["suficiente"] is True
+    assert [item["nota"] for item in resultado["publicacoes"]] == [
+        6.0,
+        5.0,
+        4.0,
+        3.0,
+        2.0,
+    ]
 
 
 def test_relatorio_progresso_anual_considera_data_e_status(
