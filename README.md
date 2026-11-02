@@ -215,19 +215,19 @@ RepositorioPublicacoes
 + «abstract» salvar(colecao: Colecao): None
 + «abstract» carregar(): Colecao
 
-RepositorioJSON(RepositorioPublicacoes)
+RepositorioJSON(RepositorioPublicacoes)          «opcional no código»
 ------------------------------------------------------------
 - _caminho: str
 ------------------------------------------------------------
 + salvar(colecao: Colecao): None        (json.dump)
 + carregar(): Colecao                   (json.load)
 
-RepositorioSQLite(RepositorioPublicacoes)      «opcional»
+RepositorioSQLite(RepositorioPublicacoes)
 ------------------------------------------------------------
 - _caminho_db: str
 ------------------------------------------------------------
 + salvar(colecao: Colecao): None
-+ carregar(): Colecao
++ carregar(): Colecao                   (repositório padrão do sistema)
 
 «módulo» dados.py
 ------------------------------------------------------------
@@ -235,15 +235,17 @@ RepositorioSQLite(RepositorioPublicacoes)      «opcional»
 + carregar_publicacoes(caminho: str): Colecao
 ```
 
-O repositório grava uma lista JSON de publicações, incluindo suas anotações e o
-tipo concreto (`livro` ou `revista`). Exemplo de uso:
+O sistema usa SQLite para persistir o acervo. O repositório JSON continua
+disponível para uso opcional dentro do código, por meio do parâmetro `formato`:
 
 ```python
 from bib.dados import carregar_publicacoes, salvar_publicacoes
 
-salvar_publicacoes(colecao, "data/publicacoes.json")
-colecao = carregar_publicacoes("data/publicacoes.json")
+salvar_publicacoes(colecao, "data/publicacoes.json", formato="json")
+colecao = carregar_publicacoes("data/publicacoes.json", formato="json")
 ```
+
+Sem informar `formato`, as funções também usam SQLite.
 
 ### 2.6. Padrão Strategy
 
@@ -374,9 +376,13 @@ Para abrir a interface interativa com menus, execute o arquivo principal:
 python main.py
 ```
 
-No início, escolha entre JSON e SQLite. Em seguida, use o menu para cadastrar
-livros e revistas, listar publicações, adicionar anotações ou consultar
-relatórios. Também é possível sair a qualquer momento com `Ctrl+C`. (Será melhorado posteriormente)
+Ao iniciar, o menu principal será exibido diretamente. Use-o para cadastrar
+livros e revistas, listar todas as publicações ou pesquisar com filtros de
+título, autor, gênero e status, adicionar anotações ou consultar relatórios.
+Depois de listar, pesquisar ou gerar um relatório, pressione Enter para voltar
+ao menu inicial. Os relatórios do menu são apresentados em texto legível; o
+comando `bib relatorio` continua exibindo JSON. Também é possível sair a
+qualquer momento com `Ctrl+C`.
 
 Instale o projeto para disponibilizar o comando `bib`:
 
@@ -384,9 +390,11 @@ Instale o projeto para disponibilizar o comando `bib`:
 python -m pip install .
 ```
 
-O acervo é salvo por padrão em `~/.bib/publicacoes.json`. Use `--formato sqlite`
-para persistir em SQLite (padrão `~/.bib/publicacoes.db`) e `--arquivo caminho`
-para escolher explicitamente o caminho do arquivo.
+O acervo é salvo por padrão no banco SQLite `~/.bib/publicacoes.db`. Use
+`--arquivo caminho` para escolher explicitamente o caminho do banco.
+As publicações recebem IDs numéricos sequenciais, como `1`, `2` e `3`. Bancos
+criados por versões anteriores, que usavam UUIDs, são migrados automaticamente
+na primeira leitura, preservando as publicações e suas anotações.
 
 ```bash
 bib cadastrar livro --titulo "Dom Casmurro" --autor "Machado de Assis" \
@@ -399,7 +407,7 @@ bib anotar ID_DA_PUBLICACAO --texto "Revisar este trecho" \
   --trecho "Trecho destacado" --pagina 12 --categoria destaque
 bib relatorio
 bib relatorio --tipo anual --meta 12 --ano 2026
-bib listar --formato sqlite
+bib listar --arquivo caminho/para/publicacoes.db
 ```
 
 Também é possível executar sem instalar o comando com `python -m bib` no lugar
@@ -414,10 +422,10 @@ python -m pip install .
 uvicorn bib.api:app --reload
 ```
 
-A documentação interativa está em `http://127.0.0.1:8000/docs`. A API usa JSON
-por padrão. Defina `BIB_FORMATO=sqlite` para usar SQLite ou `BIB_ARQUIVO` para
-escolher o caminho do arquivo. A CLI e a API podem compartilhar o mesmo arquivo
-e formato de persistência.
+A documentação interativa está em `http://127.0.0.1:8000/docs`. A API persiste
+os dados em SQLite por padrão, no caminho `~/.bib/publicacoes.db`. Defina
+`BIB_ARQUIVO` para escolher o caminho do banco. A CLI e a API podem compartilhar
+o mesmo banco SQLite.
 
 - `POST /publicacoes`: cadastra um livro ou uma revista.
 - `GET /publicacoes`: lista com filtros opcionais `titulo`, `autor`, `genero`

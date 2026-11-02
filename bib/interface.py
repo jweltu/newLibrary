@@ -1,14 +1,16 @@
 """Menu interativo para uso da biblioteca pelo terminal."""
 
+import json
 import os
 import sys
 from collections.abc import Callable
+from contextlib import redirect_stdout
+from io import StringIO
 
 from bib.cli import main as executar_comando
 
 
 def limpar_terminal() -> None:
-    """Limpa a tela quando a interface está sendo usada em um terminal."""
     if sys.stdout.isatty():
         os.system("cls" if os.name == "nt" else "clear")
 
@@ -35,22 +37,8 @@ def _ler_inteiro(prompt: str, *, minimo: int | None = None) -> int:
         return numero
 
 
-def _opcoes_persistencia() -> list[str]:
-    limpar_terminal()
-    print("\nOnde deseja salvar o acervo?")
-    print("1. JSON")
-    print("2. SQLite")
-    while True:
-        formato = input("Escolha [1]: ").strip() or "1"
-        if formato in ("1", "2"):
-            break
-        print("Opção inválida. Escolha 1 ou 2.")
-
-    opcoes = ["--formato", "json" if formato == "1" else "sqlite"]
-    caminho = input("Caminho do arquivo (Enter para usar o padrão): ").strip()
-    if caminho:
-        opcoes.extend(["--arquivo", caminho])
-    return opcoes
+def _aguardar_retorno() -> None:
+    input("\nPressione Enter para voltar ao menu inicial...")
 
 
 def _cadastrar(opcoes: list[str]) -> None:
@@ -92,9 +80,15 @@ def _cadastrar(opcoes: list[str]) -> None:
     executar_comando([*argumentos, *opcoes])
 
 
-def _listar(opcoes: list[str]) -> None:
+def _listar_todos(opcoes: list[str]) -> None:
     limpar_terminal()
-    print("\nFiltros opcionais (Enter para ignorar):")
+    executar_comando(["listar", *opcoes])
+    _aguardar_retorno()
+
+
+def _filtrar(opcoes: list[str]) -> None:
+    limpar_terminal()
+    print("\nInforme os filtros desejados (Enter para ignorar):")
     argumentos = ["listar"]
     for rotulo, opcao in (
         ("Título", "--titulo"),
@@ -106,6 +100,7 @@ def _listar(opcoes: list[str]) -> None:
         if valor:
             argumentos.extend([opcao, valor.lower()])
     executar_comando([*argumentos, *opcoes])
+    _aguardar_retorno()
 
 
 def _anotar(opcoes: list[str]) -> None:
@@ -126,6 +121,75 @@ def _anotar(opcoes: list[str]) -> None:
     if categoria:
         argumentos.extend(["--categoria", categoria])
     executar_comando([*argumentos, *opcoes])
+
+
+def _formatar_percentual(valor: int | float) -> str:
+    return f"{valor:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+
+
+def _imprimir_status(relatorio: dict[str, object]) -> None:
+    print(f"Publicações no acervo: {relatorio['total']}")
+    print("\nStatus de leitura:")
+    for chave, rotulo in (
+        ("lidos", "Lidas"),
+        ("nao_lidos", "Não lidas"),
+        ("lendo", "Em leitura"),
+    ):
+        dados = relatorio[chave]
+        if isinstance(dados, dict):
+            quantidade = dados["quantidade"]
+            percentual = _formatar_percentual(dados["percentual"])
+            print(f"  {rotulo}: {quantidade} ({percentual}%)")
+
+
+def _imprimir_relatorio(
+    tipo: str, relatorio: dict[str, object], ano: int | None = None
+) -> None:
+    if tipo == "completo":
+        print("\n=== Relatório completo ===")
+        status = relatorio["status"]
+        avaliacoes = relatorio["avaliacoes"]
+        if isinstance(status, dict):
+            _imprimir_status(status)
+        if isinstance(avaliacoes, dict):
+            media = avaliacoes["media"]
+            quantidade = avaliacoes["quantidade_avaliada"]
+            print("\nAvaliações:")
+            if media is None:
+                print("  Ainda não há publicações avaliadas.")
+            else:
+                print(
+                    f"  Nota média: {_formatar_percentual(media)}/10 "
+                    f"({quantidade} publicações)"
+                )
+        return
+
+    if tipo == "total":
+        print("\n=== Total do acervo ===")
+        print(f"Publicações cadastradas: {relatorio['total']}")
+    elif tipo == "status":
+        print("\n=== Publicações por status ===")
+        _imprimir_status(relatorio)
+    elif tipo == "media":
+        print("\n=== Média das avaliações ===")
+        media = relatorio["media"]
+        quantidade = relatorio["quantidade_avaliada"]
+        if media is None:
+            print("Ainda não há publicações avaliadas.")
+        else:
+            print(
+                f"Nota média: {_formatar_percentual(media)}/10 "
+                f"({quantidade} publicações)"
+            )
+    else:
+        print(f"\n=== Progresso de leitura em {ano} ===")
+        print(f"Leituras concluídas: {relatorio['concluidas']}")
+        meta = relatorio["meta"]
+        print(f"Meta anual: {meta}")
+        percentual = relatorio["percentual_atingido"]
+        if percentual is not None:
+            print(f"Meta alcançada: {_formatar_percentual(percentual)}%")
+        print(f"Situação: {relatorio['aviso']}")
 
 
 def _relatorio(opcoes: list[str]) -> None:
@@ -149,38 +213,49 @@ def _relatorio(opcoes: list[str]) -> None:
             break
         print("Opção inválida. Escolha um número de 1 a 5.")
 
-    argumentos = ["relatorio", "--tipo", tipos[escolha]]
+    tipo = tipos[escolha]
+    argumentos = ["relatorio", "--tipo", tipo]
+    ano_relatorio = None
     if escolha == "5":
+        ano_relatorio = _ler_inteiro("Ano do relatório: ", minimo=1500)
         argumentos.extend(
             [
                 "--meta",
                 str(_ler_inteiro("Meta anual de leituras: ", minimo=0)),
                 "--ano",
-                str(_ler_inteiro("Ano do relatório: ", minimo=1500)),
+                str(ano_relatorio),
             ]
         )
-    executar_comando([*argumentos, *opcoes])
+    saida = StringIO()
+    with redirect_stdout(saida):
+        codigo_saida = executar_comando([*argumentos, *opcoes])
+    if codigo_saida == 0:
+        resultado = json.loads(saida.getvalue())
+        _imprimir_relatorio(tipo, resultado, ano_relatorio)
+    _aguardar_retorno()
 
 
 def main() -> int:
     """Inicia a interface interativa da biblioteca."""
     acoes: dict[str, Callable[[list[str]], None]] = {
         "1": _cadastrar,
-        "2": _listar,
-        "3": _anotar,
-        "4": _relatorio,
+        "2": _listar_todos,
+        "3": _filtrar,
+        "4": _anotar,
+        "5": _relatorio,
     }
     try:
-        opcoes = _opcoes_persistencia()
+        opcoes: list[str] = []
         while True:
             limpar_terminal()
             print("\n" + "=" * 42)
             print("        NewLibrary - Biblioteca Pessoal")
             print("=" * 42)
             print("1. Cadastrar publicação")
-            print("2. Listar coleção de publicações")
-            print("3. Adicionar anotação em uma publicação")
-            print("4. Gerar relatório de leituras")
+            print("2. Listar todas as publicações")
+            print("3. Pesquisar publicações com filtros")
+            print("4. Adicionar anotação em uma publicação")
+            print("5. Gerar relatório de leituras")
             print("0. Sair")
             escolha = input("Selecione uma opção: ").strip()
 
@@ -189,7 +264,7 @@ def main() -> int:
                 return 0
             acao = acoes.get(escolha)
             if acao is None:
-                print("Opção inválida. Escolha um número de 0 a 4.")
+                print("Opção inválida. Escolha um número de 0 a 5.")
                 continue
             acao(opcoes)
     except (EOFError, KeyboardInterrupt):

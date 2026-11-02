@@ -5,7 +5,6 @@ import json
 import sys
 from datetime import date
 from pathlib import Path
-from uuid import uuid4
 
 from bib.excecoes import BibliotecaError
 from bib.models.colecao import Colecao
@@ -18,7 +17,7 @@ from bib.relatorio import (
     RelatorioProgressoAnual,
     RelatorioTotal,
 )
-from bib.repository import criar_repositorio
+from bib.repository.sqlite_repo import RepositorioSQLite
 
 
 _DIRETORIO_PADRAO = Path.home() / ".bib"
@@ -29,13 +28,7 @@ def _adicionar_arquivo(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--arquivo",
         type=Path,
-        help="caminho do arquivo do acervo (a extensão padrão depende do formato)",
-    )
-    parser.add_argument(
-        "--formato",
-        choices=("json", "sqlite"),
-        default="json",
-        help="formato de persistência (padrão: json)",
+        help="caminho do banco SQLite do acervo",
     )
 
 
@@ -107,18 +100,17 @@ def _criar_parser() -> argparse.ArgumentParser:
 def _caminho_arquivo(args: argparse.Namespace) -> Path:
     if args.arquivo is not None:
         return args.arquivo
-    extensao = "json" if args.formato == "json" else "db"
-    return _DIRETORIO_PADRAO / f"publicacoes.{extensao}"
+    return _DIRETORIO_PADRAO / "publicacoes.db"
 
 
 def _carregar(args: argparse.Namespace) -> Colecao:
-    return criar_repositorio(args.formato, _caminho_arquivo(args)).carregar()
+    return RepositorioSQLite(_caminho_arquivo(args)).carregar()
 
 
 def _salvar(args: argparse.Namespace, colecao: Colecao) -> None:
     arquivo = _caminho_arquivo(args)
     arquivo.parent.mkdir(parents=True, exist_ok=True)
-    criar_repositorio(args.formato, arquivo).salvar(colecao)
+    RepositorioSQLite(arquivo).salvar(colecao)
 
 
 def _cadastrar(args: argparse.Namespace) -> int:
@@ -129,7 +121,7 @@ def _cadastrar(args: argparse.Namespace) -> int:
         "ano": args.ano,
         "nota": None,
         "status": _STATUS[args.status],
-        "id": str(uuid4()),
+        "id": colecao.proximo_id(),
         "genero": args.genero,
         "paginas": args.paginas,
         "pagina_atual": 0,

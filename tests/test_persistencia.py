@@ -42,11 +42,11 @@ def test_funcoes_de_dados_persistem_lista_json(tmp_path, livro_factory):
     livro.adicionar_anotacao("Nota persistida")
     caminho = tmp_path / "publicacoes.json"
 
-    salvar_publicacoes(Colecao({livro.id: livro}), caminho)
+    salvar_publicacoes(Colecao({livro.id: livro}), caminho, formato="json")
 
     with caminho.open(encoding="utf-8") as arquivo:
         dados = json.load(arquivo)
-    carregada = carregar_publicacoes(caminho)
+    carregada = carregar_publicacoes(caminho, formato="json")
 
     assert dados[0]["tipo"] == "livro"
     assert dados[0]["anotacoes"][0]["texto"] == "Nota persistida"
@@ -56,14 +56,14 @@ def test_funcoes_de_dados_persistem_lista_json(tmp_path, livro_factory):
 def test_repositorio_sqlite_persiste_livros_revistas_e_anotacoes(
     tmp_path, livro_factory, revista_factory
 ):
-    livro = livro_factory()
+    livro = livro_factory(id="1")
     anotacao_livro = livro.adicionar_anotacao(
         "Uma passagem importante",
         trecho="Trecho destacado",
         pagina=12,
         categoria=CategoriaAnotacao.DESTAQUE,
     )
-    revista = revista_factory()
+    revista = revista_factory(id="2")
     anotacao_revista = revista.adicionar_anotacao("Revisar esta edição")
     caminho = tmp_path / "dados" / "publicacoes.db"
     repositorio = RepositorioSQLite(caminho)
@@ -81,10 +81,39 @@ def test_repositorio_sqlite_persiste_livros_revistas_e_anotacoes(
 
 
 def test_funcoes_de_dados_persistem_sqlite(tmp_path, livro_factory):
-    livro = livro_factory()
+    livro = livro_factory(id="1")
     caminho = tmp_path / "publicacoes.db"
 
     salvar_publicacoes(Colecao({livro.id: livro}), caminho, formato="sqlite")
     carregada = carregar_publicacoes(caminho, formato="sqlite")
 
     assert carregada.publicacoes[livro.id].to_dict() == livro.to_dict()
+
+
+def test_funcoes_de_dados_usam_sqlite_por_padrao(tmp_path, livro_factory):
+    livro = livro_factory(id="1")
+    caminho = tmp_path / "publicacoes.db"
+
+    salvar_publicacoes(Colecao({livro.id: livro}), caminho)
+    carregada = carregar_publicacoes(caminho)
+
+    assert caminho.read_bytes().startswith(b"SQLite format 3")
+    assert carregada.publicacoes[livro.id].to_dict() == livro.to_dict()
+
+
+def test_repositorio_sqlite_migra_uuids_e_preserva_anotacoes(
+    tmp_path, livro_factory, revista_factory
+):
+    livro = livro_factory(id="uuid-livro")
+    anotacao = livro.adicionar_anotacao("Nota vinculada")
+    revista = revista_factory(id="uuid-revista")
+    caminho = tmp_path / "publicacoes-legadas.db"
+    repositorio = RepositorioSQLite(caminho)
+    repositorio.salvar(Colecao({livro.id: livro, revista.id: revista}))
+
+    carregada = repositorio.carregar()
+
+    assert list(carregada.publicacoes) == ["1", "2"]
+    assert carregada.publicacoes["1"].anotacoes[0].publicacao_id == "1"
+    assert carregada.publicacoes["1"].anotacoes[0].to_dict()["texto"] == anotacao.texto
+    assert list(repositorio.carregar().publicacoes) == ["1", "2"]

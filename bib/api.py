@@ -4,7 +4,6 @@ import os
 from datetime import date
 from pathlib import Path
 from typing import Literal
-from uuid import uuid4
 
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
@@ -26,7 +25,7 @@ from bib.relatorio import (
     RelatorioProgressoAnual,
     RelatorioTotal,
 )
-from bib.repository import criar_repositorio
+from bib.repository.sqlite_repo import RepositorioSQLite
 
 
 class PublicacaoEntrada(BaseModel):
@@ -51,17 +50,16 @@ class AnotacaoEntrada(BaseModel):
 
 
 _STATUS = {status.name: status for status in StatusLeitura}
-_FORMATO_PADRAO = os.environ.get("BIB_FORMATO", "json")
 _ARQUIVO_CONFIGURADO = os.environ.get("BIB_ARQUIVO")
 
 
-def _carregar(arquivo: Path, formato: str) -> Colecao:
-    return criar_repositorio(formato, arquivo).carregar()
+def _carregar(arquivo: Path) -> Colecao:
+    return RepositorioSQLite(arquivo).carregar()
 
 
-def _salvar(arquivo: Path, formato: str, colecao: Colecao) -> None:
+def _salvar(arquivo: Path, colecao: Colecao) -> None:
     arquivo.parent.mkdir(parents=True, exist_ok=True)
-    criar_repositorio(formato, arquivo).salvar(colecao)
+    RepositorioSQLite(arquivo).salvar(colecao)
 
 
 def _serializar_publicacao(publicacao: Publicacao) -> dict[str, object]:
@@ -70,20 +68,14 @@ def _serializar_publicacao(publicacao: Publicacao) -> dict[str, object]:
     return dados
 
 
-def create_app(
-    arquivo: Path | str | None = None, formato: str | None = None
-) -> FastAPI:
-    """Cria a aplicação, permitindo configurar arquivo e formato do acervo."""
-    formato_persistencia = formato if formato is not None else _FORMATO_PADRAO
-    if formato_persistencia not in ("json", "sqlite"):
-        raise ValueError(f"Formato de persistência inválido: {formato_persistencia!r}")
+def create_app(arquivo: Path | str | None = None) -> FastAPI:
+    """Cria a aplicação, permitindo configurar o caminho do banco SQLite."""
     if arquivo is not None:
         caminho = Path(arquivo)
     elif _ARQUIVO_CONFIGURADO:
         caminho = Path(_ARQUIVO_CONFIGURADO)
     else:
-        extensao = "json" if formato_persistencia == "json" else "db"
-        caminho = Path.home() / ".bib" / f"publicacoes.{extensao}"
+        caminho = Path.home() / ".bib" / "publicacoes.db"
     app = FastAPI(title="NewLibrary API", version="0.1.0")
 
     @app.exception_handler(BibliotecaError)
@@ -105,7 +97,7 @@ def create_app(
         genero: str | None = None,
         status: Literal["NAO_LIDO", "LENDO", "LIDO"] | None = None,
     ) -> list[dict[str, object]]:
-        colecao = _carregar(caminho, formato_persistencia)
+        colecao = _carregar(caminho)
         resultado = colecao.buscar(
             titulo=titulo,
             autor=autor,
@@ -116,12 +108,12 @@ def create_app(
 
     @app.post("/publicacoes", status_code=201)
     def cadastrar_publicacao(entrada: PublicacaoEntrada) -> dict[str, object]:
-        colecao = _carregar(caminho, formato_persistencia)
+        colecao = _carregar(caminho)
         dados = entrada.model_dump()
         tipo = dados.pop("tipo")
         status = _STATUS[dados.pop("status")]
         dados.update(
-            id=str(uuid4()),
+            id=colecao.proximo_id(),
             nota=None,
             status=status,
             pagina_atual=0,
@@ -141,19 +133,19 @@ def create_app(
             dados.pop("isbn")
             publicacao = Revista(**dados)
         colecao.adicionar(publicacao)
-        _salvar(caminho, formato_persistencia, colecao)
+        _salvar(caminho, colecao)
         return _serializar_publicacao(publicacao)
 
     @app.get("/publicacoes/{publicacao_id}")
     def obter_publicacao(publicacao_id: str) -> dict[str, object]:
-        publicacao = _carregar(caminho, formato_persistencia).obter(publicacao_id)
+        publicacao = _carregar(caminho).obter(publicacao_id)
         return _serializar_publicacao(publicacao)
 
     @app.post("/publicacoes/{publicacao_id}/anotacoes", status_code=201)
     def adicionar_anotacao(
         publicacao_id: str, entrada: AnotacaoEntrada
     ) -> dict[str, object]:
-        colecao = _carregar(caminho, formato_persistencia)
+        colecao = _carregar(caminho)
         publicacao = colecao.obter(publicacao_id)
         anotacao = publicacao.adicionar_anotacao(
             entrada.texto,
@@ -161,7 +153,7 @@ def create_app(
             pagina=entrada.pagina,
             categoria=CategoriaAnotacao(entrada.categoria),
         )
-        _salvar(caminho, formato_persistencia, colecao)
+        _salvar(caminho, colecao)
         return anotacao.to_dict()
 
     @app.get("/relatorios/{tipo}")
@@ -170,7 +162,7 @@ def create_app(
         meta: int = Query(default=0, ge=0),
         ano: int | None = Query(default=None, ge=1500),
     ) -> dict[str, object]:
-        colecao = _carregar(caminho, formato_persistencia)
+        colecao = _carregar(caminho)
         ano_relatorio = ano if ano is not None else date.today().year
         relatorios = {
             "total": lambda: RelatorioTotal().gerar(colecao),

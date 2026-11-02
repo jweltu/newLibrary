@@ -4,7 +4,7 @@ from bib.api import create_app
 
 
 def test_api_cadastra_lista_consulta_anota_e_relata(tmp_path):
-    client = TestClient(create_app(tmp_path / "acervo" / "publicacoes.json"))
+    client = TestClient(create_app(tmp_path / "acervo" / "publicacoes.db"))
 
     resposta = client.post(
         "/publicacoes",
@@ -22,6 +22,7 @@ def test_api_cadastra_lista_consulta_anota_e_relata(tmp_path):
     publicacao = resposta.json()
     assert publicacao["tipo"] == "livro"
     publicacao_id = publicacao["id"]
+    assert publicacao_id == "1"
 
     assert client.get("/publicacoes", params={"titulo": "casmurro"}).json() == [
         publicacao
@@ -46,7 +47,7 @@ def test_api_cadastra_lista_consulta_anota_e_relata(tmp_path):
 
 
 def test_api_valida_entradas_e_reporta_erros_de_dominio(tmp_path):
-    client = TestClient(create_app(tmp_path / "acervo.json"))
+    client = TestClient(create_app(tmp_path / "acervo.db"))
     dados_publicacao = {
         "tipo": "revista",
         "titulo": "Revista de História",
@@ -70,7 +71,7 @@ def test_api_valida_entradas_e_reporta_erros_de_dominio(tmp_path):
 
 
 def test_api_relatorio_anual(tmp_path):
-    client = TestClient(create_app(tmp_path / "acervo.json"))
+    client = TestClient(create_app(tmp_path / "acervo.db"))
 
     resposta = client.get("/relatorios/anual", params={"meta": 12, "ano": 2026})
 
@@ -81,7 +82,7 @@ def test_api_relatorio_anual(tmp_path):
 
 def test_api_persiste_em_sqlite(tmp_path):
     caminho_db = tmp_path / "dados" / "biblioteca.db"
-    client = TestClient(create_app(caminho_db, formato="sqlite"))
+    client = TestClient(create_app(caminho_db))
     cadastro = client.post(
         "/publicacoes",
         json={

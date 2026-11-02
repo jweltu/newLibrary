@@ -23,6 +23,14 @@ class Colecao:
     def __iter__(self):
         return iter(self._publicacoes.values())
 
+    def proximo_id(self):
+        ids_numericos = (
+            int(publicacao.id)
+            for publicacao in self._publicacoes.values()
+            if str(publicacao.id).isdecimal()
+        )
+        return str(max(ids_numericos, default=0) + 1)
+
     def adicionar(self, pub):
         if not isinstance(pub, Publicacao):
             raise ValidacaoError("A coleção aceita somente publicações válidas")

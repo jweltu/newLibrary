@@ -2,6 +2,7 @@ import json
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from uuid import uuid4
 
 from bib.models.colecao import Colecao
 from bib.models.livro import Livro
@@ -52,6 +53,7 @@ class RepositorioSQLite(RepositorioPublicacoes):
         tipos = {"livro": Livro, "revista": Revista}
         publicacoes = {}
         with closing(self._conectar()) as conexao:
+            self._migrar_ids_numericos(conexao)
             registros = conexao.execute(
                 "SELECT id, tipo, dados FROM publicacoes ORDER BY rowid"
             ).fetchall()
@@ -72,3 +74,47 @@ class RepositorioSQLite(RepositorioPublicacoes):
                 )
             publicacoes[publicacao.id] = publicacao
         return Colecao(publicacoes)
+
+    @staticmethod
+    def _migrar_ids_numericos(conexao: sqlite3.Connection) -> None:
+        with conexao:
+            registros = conexao.execute(
+                "SELECT rowid, id, dados FROM publicacoes ORDER BY rowid"
+            ).fetchall()
+            if not any(not str(id_publicacao).isdecimal() for _, id_publicacao, _ in registros):
+                return
+
+            registros_com_novos_ids = []
+            for novo_id, (rowid, id_publicacao, dados) in enumerate(registros, start=1):
+                registro = json.loads(dados)
+                if not isinstance(registro, dict):
+                    raise ValueError(
+                        f"Os dados da publicação {id_publicacao!r} devem ser um objeto"
+                    )
+                if registro.get("id") != id_publicacao:
+                    raise ValueError(
+                        f"ID da publicação inconsistente no SQLite: {id_publicacao!r}"
+                    )
+
+                novo_id_texto = str(novo_id)
+                for anotacao in registro.get("anotacoes", []):
+                    if anotacao.get("publicacao_id") == id_publicacao:
+                        anotacao["publicacao_id"] = novo_id_texto
+                registro["id"] = novo_id_texto
+                registros_com_novos_ids.append(
+                    (rowid, id_publicacao, novo_id_texto, json.dumps(registro, ensure_ascii=False))
+                )
+
+            ids_temporarios = {
+                rowid: f"__migrando_{uuid4()}__" for rowid, _, _, _ in registros_com_novos_ids
+            }
+            for rowid, id_temporario in ids_temporarios.items():
+                conexao.execute(
+                    "UPDATE publicacoes SET id = ? WHERE rowid = ?",
+                    (id_temporario, rowid),
+                )
+            for rowid, _, novo_id, dados in registros_com_novos_ids:
+                conexao.execute(
+                    "UPDATE publicacoes SET id = ?, dados = ? WHERE rowid = ?",
+                    (novo_id, dados, rowid),
+                )

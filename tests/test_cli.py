@@ -1,10 +1,11 @@
 import json
 
 from bib.cli import main
+from bib.repository.sqlite_repo import RepositorioSQLite
 
 
 def test_cli_cadastra_lista_anota_e_gera_relatorio(tmp_path, capsys):
-    arquivo = tmp_path / "acervo" / "publicacoes.json"
+    arquivo = tmp_path / "acervo" / "publicacoes.db"
     opcoes_arquivo = ["--arquivo", str(arquivo)]
 
     assert main(
@@ -24,6 +25,7 @@ def test_cli_cadastra_lista_anota_e_gera_relatorio(tmp_path, capsys):
     ) == 0
     saida_cadastro = capsys.readouterr().out
     id_publicacao = saida_cadastro.split("ID ", 1)[1].split(":", 1)[0]
+    assert id_publicacao == "1"
 
     assert main(["listar", *opcoes_arquivo]) == 0
     assert "Dom Casmurro" in capsys.readouterr().out
@@ -45,13 +47,17 @@ def test_cli_cadastra_lista_anota_e_gera_relatorio(tmp_path, capsys):
     resultado = json.loads(capsys.readouterr().out)
     assert resultado["total"] == {"total": 1}
     assert resultado["status"]["total"] == 1
-    assert json.loads(arquivo.read_text(encoding="utf-8"))[0]["anotacoes"][0][
-        "texto"
-    ] == "Revisar passagem"
+    anotacao = (
+        RepositorioSQLite(arquivo)
+        .carregar()
+        .publicacoes[id_publicacao]
+        .anotacoes[0]
+    )
+    assert anotacao.texto == "Revisar passagem"
 
 
 def test_cli_relatorio_anual_e_filtragem_de_lista(tmp_path, capsys):
-    arquivo = tmp_path / "publicacoes.json"
+    arquivo = tmp_path / "publicacoes.db"
     opcoes_arquivo = ["--arquivo", str(arquivo)]
     main(
         [
@@ -98,7 +104,7 @@ def test_cli_informa_publicacao_inexistente(tmp_path, capsys):
             "--texto",
             "Minha anotação",
             "--arquivo",
-            str(tmp_path / "acervo.json"),
+            str(tmp_path / "acervo.db"),
         ]
     )
 
@@ -108,7 +114,7 @@ def test_cli_informa_publicacao_inexistente(tmp_path, capsys):
 
 def test_cli_persiste_em_sqlite(tmp_path, capsys):
     arquivo = tmp_path / "acervo.db"
-    opcoes_sqlite = ["--formato", "sqlite", "--arquivo", str(arquivo)]
+    opcoes_sqlite = ["--arquivo", str(arquivo)]
 
     assert main(
         [
@@ -129,4 +135,30 @@ def test_cli_persiste_em_sqlite(tmp_path, capsys):
 
     assert arquivo.exists()
     assert main(["listar", *opcoes_sqlite]) == 0
-    assert "Dom Casmurro" in capsys.readouterr().out
+    assert "[1] livro: Dom Casmurro" in capsys.readouterr().out
+
+
+def test_cli_gera_ids_numericos_sequenciais(tmp_path, capsys):
+    arquivo = tmp_path / "acervo.db"
+    opcoes_arquivo = ["--arquivo", str(arquivo)]
+
+    for titulo in ("Primeiro", "Segundo"):
+        assert main(
+            [
+                "cadastrar",
+                "livro",
+                "--titulo",
+                titulo,
+                "--autor",
+                f"Autor {titulo}",
+                "--ano",
+                "2020",
+                "--paginas",
+                "100",
+                *opcoes_arquivo,
+            ]
+        ) == 0
+
+    saidas = capsys.readouterr().out
+    assert "ID 1: Primeiro" in saidas
+    assert "ID 2: Segundo" in saidas
