@@ -8,21 +8,21 @@ O projeto foi desenvolvido majoriamente em Python, com aplicação de conceitos 
 
 As **principais funcionalidades** do projeto são:
 
-1. Cadastro de publicações
-  - gerenciamento de publicações (Adicionar, Editar, Pesquisar, Excluir);
+- Cadastro de publicações
+  - Gerenciamento de publicações (Adicionar, Editar, Pesquisar, Excluir);
   - Gerenciamento do status de leitura e progresso de cada publicação;
-2. Anotações e destaques
+- Anotações e destaques
   - Permitir registrar anotações associadas a uma publicação (texto livre);
   - Listar anotações por publicação;
-3. Busca e filtros
+- Busca e filtros
   - Buscar publicações por título, autor, gênero ou status;
   - Filtrar por período de leitura (entre datas).
-4. Relatórios
+- Relatórios
   - Total de publicações cadastradas;
   - Quantidade e percentual de livros lidos, não lidos e em leitura;
   - Média das avaliações das publicações lidas;
   - Top 5 publicações mais bem avaliadas.
-5. Configurações (settings.json)
+- Configurações (settings.json)
   - Edição de parâmetros opcionais como: gênero favorito, limite de páginas para leituras simultâneas, meta anual de leituras.
 
 ## UML do Projeto
