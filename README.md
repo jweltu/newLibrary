@@ -1,14 +1,29 @@
 # 📚NewLibrary - Projeto de Biblioteca Pessoal Digital desenvolvida em Python
 
-## 1. Definição do Projeto
+## Definição do Projeto
 
-O **NewLibrary** é um sistema para o gerenciamento de uma biblioteca pessoal de livros e revistas digitais e para o controle de leitura do usuário. Entre suas funcionalidades estão:
+O **NewLibrary** é um sistema básico de registro literário pessoal, que proporciona um gerenciamento eficiente da coleção de livros e revistas, além de gerar relatórios sobre o progresso de leitura e metas definidas pelo usuário. 
 
-- Cadastro de Publicações;
-- Registro de Leituras;
-- Controle de Status de Leitura;
-- Relatórios Sobre o Acervo pessoal.
+O projeto foi desenvolvido majoriamente em Python, com aplicação de conceitos de Programação Orientada a Objetos, como encapsulamento, herança, métodos especiais e regras de negócio. Além disso, possui persistência dos dados em SQLite (padrão) e JSON (Opcional). As funcionalidades também são testadas e validadas utilizando comandos com Pytest.
 
+As **principais funcionalidades** do projeto são:
+
+1. Cadastro de publicações
+  - gerenciamento de publicações (Adicionar, Editar, Pesquisar, Excluir);
+  - Gerenciamento do status de leitura e progresso de cada publicação;
+2. Anotações e destaques
+  - Permitir registrar anotações associadas a uma publicação (texto livre);
+  - Listar anotações por publicação;
+3. Busca e filtros
+  - Buscar publicações por título, autor, gênero ou status;
+  - Filtrar por período de leitura (entre datas).
+4. Relatórios
+  - Total de publicações cadastradas;
+  - Quantidade e percentual de livros lidos, não lidos e em leitura;
+  - Média das avaliações das publicações lidas;
+  - Top 5 publicações mais bem avaliadas.
+5. Configurações (settings.json)
+  - Edição de parâmetros opcionais como: gênero favorito, limite de páginas para leituras simultâneas, meta anual de leituras.
 
 ## UML do Projeto
 
